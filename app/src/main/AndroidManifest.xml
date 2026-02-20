@@ -2,8 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
+        android:name=".core.PaymentApplication"
         android:allowBackup="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -12,9 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StripePaymentGateway">
         <activity
-            android:name=".MainActivity"
+            android:name=".presentation.orders.OrderActivity"
             android:exported="true"
-            android:label="@string/app_name"
+            android:label="@string/title_activity_order"
             android:theme="@style/Theme.StripePaymentGateway">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
