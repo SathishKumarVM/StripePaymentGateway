@@ -29,7 +29,7 @@ object NetworkModule {
     @Singleton
     fun providesRetrofitInstance(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://192.168.0.104/payment-tutorial/")
+            .baseUrl("http://192.168.0.108/payment-tutorial/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

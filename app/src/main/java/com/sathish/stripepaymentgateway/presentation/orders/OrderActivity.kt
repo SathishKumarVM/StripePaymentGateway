@@ -103,5 +103,9 @@ fun OrderScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = it, color = Color.Red)
         }
+
+        if(uiState.isPaymentSuccess) {
+            Text(color = Color.Green, text = "Thanks, Your payment has been made successfully.")
+        }
     }
 }

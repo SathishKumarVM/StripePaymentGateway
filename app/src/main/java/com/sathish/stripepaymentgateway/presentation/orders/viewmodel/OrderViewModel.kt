@@ -1,23 +1,22 @@
 package com.sathish.stripepaymentgateway.presentation.orders.viewmodel
 
 import android.content.Context
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sathish.stripepaymentgateway.domain.OrderUseCase
 import com.sathish.stripepaymentgateway.presentation.orders.OrderUiState
 import com.stripe.android.PaymentConfiguration
 import com.stripe.android.paymentsheet.PaymentSheet
+import com.stripe.android.paymentsheet.PaymentSheetResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import com.stripe.android.paymentsheet.PaymentSheetResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 @HiltViewModel
 class OrderViewModel @Inject constructor(
@@ -27,6 +26,7 @@ class OrderViewModel @Inject constructor(
 
     var customerId: String? = null
     var paymentIntent: String? = null
+    var paymentIntentId: String? = null
     var publishableKey: String? = null
     var customerSessionClientSecret: String? = null
 
@@ -34,10 +34,6 @@ class OrderViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(OrderUiState())
     val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
-
-    fun initiateOrderPayment() {
-        orderUseCase.getOrderPayment()
-    }
 
     fun fetchPaymentDetails() {
         viewModelScope.launch {
@@ -54,6 +50,7 @@ class OrderViewModel @Inject constructor(
 
                     customerId = body.customer
                     paymentIntent = body.paymentIntent
+                    paymentIntentId = body.paymentIntentId
                     publishableKey = body.publishableKey
                     customerSessionClientSecret = body.customerSessionClientSecret
 
@@ -86,6 +83,7 @@ class OrderViewModel @Inject constructor(
             is PaymentSheetResult.Completed -> {
                 // Ideally verify payment with backend here or web hooks
                 _uiState.value = OrderUiState()
+                verifyPaymentFromBackend()
             }
             is PaymentSheetResult.Failed -> {
                 _uiState.value =
@@ -97,4 +95,26 @@ class OrderViewModel @Inject constructor(
         }
     }
 
+    fun verifyPaymentFromBackend() {
+
+        val intentId = paymentIntentId ?: return
+
+        viewModelScope.launch {
+            _uiState.value = OrderUiState(isLoading = true)
+
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    orderUseCase.verifyPayment(intentId)
+                }
+                if (result?.status == "paid") {
+                    _uiState.value = OrderUiState(isPaymentSuccess = true)
+                } else {
+                    _uiState.value =
+                        OrderUiState(error = "Payment not completed yet")
+                }
+            } catch (e: Exception) {
+                _uiState.value = OrderUiState(error = e.message)
+            }
+        }
+    }
 }
